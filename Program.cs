@@ -80,7 +80,7 @@ namespace KutuphaneYonetimSistemi
                     Environment.Exit(0);
                 }
             }
-            if (from == "Borrow")
+            if (from == "Display")
             {
                 if (choose == '8' || choose == '9' || choose == 'x')
                 {
@@ -101,7 +101,7 @@ namespace KutuphaneYonetimSistemi
                     library.AddBook();
                     break;
                 case '2':
-                    library.DisplayBooks(library.ListOfBooks());
+                    library.DisplayBooks(unselectable: true, 0, '0', library.ListOfBooks());
                     break;
                 case '3':
                     library.SearchBook(display: true);
@@ -253,39 +253,71 @@ namespace KutuphaneYonetimSistemi
             return true;
         }
 
-        public void DisplayBooks(List<Book> list)
+
+        public Book DisplayBooks(bool unselectable, int offSet, char choose, List<Book> found)
         {
-            Console.Clear();
-            if (list.Count == 0)
-                Console.WriteLine("No Books Found!\nPress any key to return to main menu...");
-            else
-                for (int i = 0; i < list.Count; i++)
-                    Console.Write("Name: {0}\nAuthor: {1}\nISBN: {2}\nCopies: {3}\nBorrowed: {4}\n-----------------------\n",
-                        list[i].GetName(),
-                        list[i].GetAuthor(),
-                        list[i].GetIsbn(),
-                        list[i].GetCopy(),
-                        list[i].GetBorrow());
-            Console.WriteLine("\nPress any key to return to main menu...");
-            Console.ReadKey();
-        }
-        void DisplayFoundedBooks(List<Book> list)
-        {
-            Console.Write("\u001b[2J\u001b[3J");
-            Console.Clear();
-            if (list.Count == 0)
-                Console.WriteLine("No Books Found!\nPress any key to return to back...");
-            Console.WriteLine("WriteOnce");
-            for (int i = 0; i < list.Count; i++)
+            if (found.Count == 0)
             {
-                Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nCopies: {4}\nBorrowed: {5}\n-----------------------\n",
-                    i + 1,
-                     list[i].GetName(),
-                      list[i].GetAuthor(),
-                       list[i].GetIsbn(),
-                        list[i].GetCopy(),
-                         list[i].GetBorrow());
+                Console.WriteLine("No Books Found!\nPress any key to return to back...");
+                Console.ReadKey();
+                return null;
             }
+
+            Book book;
+            List<Book> page = found.GetRange(offSet, (int)MathF.Min(found.Count, offSet + 5));
+            char foundCount = Convert.ToChar((char)MathF.Min(page.Count + '0', '5'));
+
+            do
+            {
+                Console.Write("\u001b[2J\u001b[3J");
+                Console.Clear();
+
+                for (int i = 0; i < page.Count; i++)
+                {
+                    Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nCopies: {4}\nBorrowed: {5}\n-----------------------\n",
+                        (unselectable) ? offSet + i + 1 : i + 1,
+                         page[i].GetName(),
+                          page[i].GetAuthor(),
+                           page[i].GetIsbn(),
+                            page[i].GetCopy(),
+                             page[i].GetBorrow());
+                }
+
+                if (offSet != 0)
+                    Console.WriteLine("8-) Previous Page");
+                if (offSet + page.Count < found.Count)
+                    Console.WriteLine("9-) Next Page");
+
+                Console.WriteLine("x-) Return to main menu.");
+                if (!unselectable)
+                {
+                    Console.Write("Select the one you want to borrow or return: ");
+                    if (!libSystem.GetChoose('1', foundCount, ref choose, "Display"))
+                        continue;
+
+                }
+                else
+                {
+                    if (!libSystem.GetChoose('8', '9', ref choose, "Display"))
+                        continue;
+                }
+
+
+                page = PageChange(ref offSet, choose, found);
+
+                if (choose == 'x')
+                {
+                    return null;
+                }
+
+            } while (choose == 'p' || choose == '8' || choose == '9');
+
+            if (!unselectable)
+            {
+                return page[choose - '0' - 1];
+            }
+            return null;
+
         }
 
         public List<Book> SearchBook(bool display)
@@ -320,7 +352,7 @@ namespace KutuphaneYonetimSistemi
 
                 if (display)
                 {
-                    DisplayBooks(found);
+                    DisplayBooks(unselectable: true, 0, choose, found);
                     Console.Clear();
                     Console.WriteLine("1-)Search another book.");
                     Console.WriteLine("Or press any key to go back...");
@@ -359,6 +391,7 @@ namespace KutuphaneYonetimSistemi
 
             return found;
         }
+
         public void BorrowBook()
         {
             Console.Clear();
@@ -370,44 +403,17 @@ namespace KutuphaneYonetimSistemi
                 return;
             }
 
-            int offSet = 0;
-            List<Book> page = found.GetRange(offSet, (int)MathF.Min(found.Count, offSet + 5));
-
             char choose = ' ';
-            char foundCount = Convert.ToChar((char)MathF.Min(page.Count + '0', '5'));
-
-            do
-            {
-                DisplayFoundedBooks(page);
-
-                if (offSet != 0)
-                    Console.WriteLine("8-) Previous Page");
-                if (offSet + page.Count < found.Count)
-                    Console.WriteLine("9-) Next Page");
-
-                Console.WriteLine("x-) Return to main menu.");
-                Console.Write("Select the one you want to borrow: ");
-
-                if (!libSystem.GetChoose('1', foundCount, ref choose, "Borrow"))
-                    continue;
-
-                offSet += (choose == '8') ? -5 : (choose == '9') ? 5 : 0;
-                int next = (int)MathF.Min(found.Count - offSet, offSet + 5);
-                page = found.GetRange(offSet, next);
-
-                if (choose == 'x')
-                {
-                    return;
-                }
-
-            } while (choose == 'p' || choose == '8' || choose == '9');
-
+            Book selected = DisplayBooks(unselectable: false, 0, choose, found);
             bool loop = false;
-            int selected = choose - '0' - 1;
+            if (selected == null)
+            {
+                return;
+            }
             do
             {
                 Console.Clear();
-                Console.WriteLine("You've selected this book:\n{0} by {1}", page[selected].GetName(), page[selected].GetAuthor());
+                Console.WriteLine("You've selected this book:\n{0} by {1}", selected.GetName(), selected.GetAuthor());
                 Console.WriteLine("Are you sure to borrow this book?");
                 Console.WriteLine("1-)Yes.");
                 Console.WriteLine("2-)No.");
@@ -422,11 +428,21 @@ namespace KutuphaneYonetimSistemi
 
             if (choose == '1')
             {
-                page[selected].SetCopies(increase: false);
+                selected.SetCopies(increase: false);
                 SaveBooks();
             }
         }
+        List<Book> PageChange(ref int offSet, char choose, List<Book> found)
+        {
+            int tempOffSet = offSet;
+            offSet += (choose == '8') ? -5 : (choose == '9') ? 5 : 0;
+            if (offSet < 0 || offSet > found.Count)
+                offSet = tempOffSet;
 
+            int next = (int)MathF.Min(found.Count - offSet, 5);
+
+            return found.GetRange(offSet, next);
+        }
         public void ReturnBook()
         {
             Console.WriteLine("ReturnBook");
