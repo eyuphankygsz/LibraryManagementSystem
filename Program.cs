@@ -21,13 +21,7 @@ namespace KutuphaneYonetimSistemi
 
     class LibrarySystem
     {
-        Library library;
-        FileStream file;
-        StreamWriter writer;
-        string filePath, fileName;
-
-
-
+        Library? library;
         public void Initialize()
         {
             library = new Library(this);
@@ -98,22 +92,22 @@ namespace KutuphaneYonetimSistemi
             switch (input)
             {
                 case '1':
-                    library.AddBook();
+                    library?.AddBook();
                     break;
                 case '2':
-                    library.DisplayBooks(unselectable: true, 0, '0', library.ListOfBooks());
+                    library?.DisplayBooks(unselectable: true, 0, '0', library.ListOfBooks());
                     break;
                 case '3':
-                    library.SearchBook(display: true);
+                    library?.SearchBook(display: true);
                     break;
                 case '4':
-                    library.BorrowBook();
+                    library?.BorrowBook();
                     break;
                 case '5':
-                    library.ReturnBook();
+                    library?.ReturnBook();
                     break;
                 case '6':
-                    library.UnreturnedBooks();
+                    library?.UnreturnedBooks();
                     break;
             }
         }
@@ -131,7 +125,7 @@ namespace KutuphaneYonetimSistemi
         public byte GetCopy() => copy;
         public byte GetBorrow() => borrow;
 
-        public void SetCopies(bool increase)
+        public void SetInfo(bool increase)
         {
             if (increase)
             {
@@ -144,6 +138,8 @@ namespace KutuphaneYonetimSistemi
                 borrow++;
             }
         }
+        public void SetCopy(byte copy) => this.copy = copy;
+        public void SetBorrow(byte borrow) => this.borrow = borrow;
 
         public Book(string bName, string author, string isbn, byte copy, byte borrow)
         {
@@ -155,10 +151,33 @@ namespace KutuphaneYonetimSistemi
         }
     }
 
+    class Borrowed
+    {
+        string isbn;
+        string borrowCode;
+        DateTime borrowedDate;
+        DateTime returnDate;
+
+        public string ISBN() => isbn;
+        public string BorrowCode() => borrowCode;
+        public DateTime B_Date() => borrowedDate;
+        public DateTime R_Date() => returnDate;
+
+        public Borrowed(string isbn, string borrowCode, DateTime borrowedDate, DateTime returnDate)
+        {
+            this.isbn = isbn;
+            this.borrowCode = borrowCode;
+            this.borrowedDate = borrowedDate;
+            this.returnDate = returnDate;
+        }
+    }
+
     class Library
     {
         List<Book> books = new List<Book>();
-        string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\books.txt";
+        List<Borrowed> borrowedList = new List<Borrowed>();
+        string bookPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "books.txt");
+        string borrowPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "borrowed.txt");
         public List<Book> ListOfBooks()
         {
             return books;
@@ -175,16 +194,14 @@ namespace KutuphaneYonetimSistemi
             do
             {
                 Console.Clear();
-                string bName = SetStrings("Please enter the book's name (Ex. Red Dead): ", "bName");
+                string bName = SetStrings("Please enter the book's name (Ex. Red Dead): ", " ");
                 if (bName.Length == 0) break;
-                string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", "author");
-                if (bName.Length == 0) break;
+                string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", " ");
+                if (author.Length == 0) break;
                 string isbn = SetStrings("Please enter the book's ISBN (Ex. 9876543210987): ", "isbn");
-                if (bName.Length == 0) break;
-                byte copy = SetBytes("Please enter how many copies of this book this library have: ");
-                if (bName.Length == 0) break;
-                byte borrow = SetBytes("Please enter how many copies of this book has been borrowed: ");
-                if (bName.Length == 0) break;
+                if (isbn.Length == 0) break;
+                byte copy = SetBytes("Please enter how many copies of this book this library have: ", 1);
+                byte borrow = SetBytes("Please enter how many copies of this book has been borrowed: ", 0);
                 Console.WriteLine("Adding new book to the list...");
 
                 Book newBook = new Book(bName, author, isbn, copy, borrow);
@@ -198,31 +215,38 @@ namespace KutuphaneYonetimSistemi
             } while (choose == '1');
 
         }
-        byte SetBytes(string message)
+        byte SetBytes(string message, byte min)
         {
             Console.Clear();
             bool error = false;
             while (true)
             {
                 if (error)
-                    Console.WriteLine("Please enter numeric value. (0 to 255)");
+                    Console.WriteLine("Please enter numeric value. ({0} to 255)", min);
                 error = true;
 
                 Console.WriteLine(message);
                 string input = Console.ReadLine();
-                if (byte.TryParse(input, out byte parse))
-                    return Convert.ToByte(input);
+
+                if (byte.TryParse(input, out byte selected))
+                {
+                    if (selected < min)
+                        continue;
+                    else
+                        return Convert.ToByte(input);
+                }
 
             }
         }
         string SetStrings(string message, string from)
         {
             Console.Clear();
-            Console.WriteLine("(To cancel adding a new book, press ENTER without write anything.)");
             bool error = false;
             string errorMessage = "";
             while (true)
             {
+
+                Console.WriteLine("(To cancel adding a new book, press ENTER without write anything.)");
                 if (error)
                     Console.WriteLine(errorMessage);
                 errorMessage = "Please enter at least 3 characters.";
@@ -231,7 +255,7 @@ namespace KutuphaneYonetimSistemi
                 string str = Console.ReadLine();
                 if (from.Equals("isbn"))
                 {
-                    errorMessage = "Please enter at least 3 numeric values. Only numeric values!";
+                    errorMessage = "The ISBN code must consist of numbers only, be at least 3 digits and unique.";
                     if (!ISBNCheck(str))
                         continue;
                 }
@@ -250,6 +274,18 @@ namespace KutuphaneYonetimSistemi
                 if (!char.IsDigit(str[i]))
                     return false;
             }
+            bool match = false;
+            books.ForEach(delegate (Book b)
+            {
+                if (b.GetIsbn().Equals(str))
+                {
+                    match = true;
+                }
+            }
+            );
+            if (match)
+                return false;
+
             return true;
         }
 
@@ -265,23 +301,19 @@ namespace KutuphaneYonetimSistemi
 
             Book book;
             List<Book> page = found.GetRange(offSet, (int)MathF.Min(found.Count, offSet + 5));
-            char foundCount = Convert.ToChar((char)MathF.Min(page.Count + '0', '5'));
-
             do
             {
                 Console.Write("\u001b[2J\u001b[3J");
                 Console.Clear();
-
-                for (int i = 0; i < page.Count; i++)
-                {
-                    Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nCopies: {4}\nBorrowed: {5}\n-----------------------\n",
-                        (unselectable) ? offSet + i + 1 : i + 1,
-                         page[i].GetName(),
-                          page[i].GetAuthor(),
-                           page[i].GetIsbn(),
-                            page[i].GetCopy(),
-                             page[i].GetBorrow());
-                }
+                int counter = 1;
+                page.ForEach(x =>
+                Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nCopies: {4}\nBorrowed: {5}\n-----------------------\n",
+                        (unselectable) ? offSet + counter++ : counter++,
+                         x.GetName(),
+                          x.GetAuthor(),
+                           x.GetIsbn(),
+                            x.GetCopy(),
+                             x.GetBorrow()));
 
                 if (offSet != 0)
                     Console.WriteLine("8-) Previous Page");
@@ -292,7 +324,7 @@ namespace KutuphaneYonetimSistemi
                 if (!unselectable)
                 {
                     Console.Write("Select the one you want to borrow or return: ");
-                    if (!libSystem.GetChoose('1', foundCount, ref choose, "Display"))
+                    if (!libSystem.GetChoose('1', Convert.ToChar((char)MathF.Min(page.Count + '0', '5')), ref choose, "Display"))
                         continue;
 
                 }
@@ -371,6 +403,7 @@ namespace KutuphaneYonetimSistemi
                 return null;
             }
             List<Book> found = new List<Book>();
+
             for (int i = 0; i < books.Count; i++)
             {
                 if (from == "bName")
@@ -402,9 +435,21 @@ namespace KutuphaneYonetimSistemi
                 Console.ReadKey();
                 return;
             }
-
+            Book selected = null;
             char choose = ' ';
-            Book selected = DisplayBooks(unselectable: false, 0, choose, found);
+            while (true)
+            {
+                selected = DisplayBooks(unselectable: false, 0, choose, found);
+                if (selected.GetCopy() == 0)
+                {
+                    Console.Clear();
+                    Console.WriteLine("\nThis book has 0 copies in the library right now!\nPlease press any key to return...");
+                    Console.ReadKey();
+                    return;
+                }
+                else break;
+
+            }
             bool loop = false;
             if (selected == null)
             {
@@ -428,8 +473,78 @@ namespace KutuphaneYonetimSistemi
 
             if (choose == '1')
             {
-                selected.SetCopies(increase: false);
+                Random rand = new Random();
+                string borrowCode = books.IndexOf(selected).ToString() + selected.GetCopy().ToString() + rand.Next(100, 1000).ToString();
+                DateTime now = DateTime.Now;
+                DateTime returnTime = now.AddDays(30);
+                Borrowed newBorrowed = new Borrowed(selected.GetIsbn(), borrowCode, now, returnTime);
+                selected.SetInfo(increase: false);
+                borrowedList.Add(newBorrowed);
+                WriteBorrow(newBorrowed);
+                Console.Clear();
+                Console.WriteLine("You've borrowed the book!");
+                Console.WriteLine("DON'T FORGET YOUR BORROW CODE: {0}", borrowCode);
+                Console.WriteLine("You have to return this book until: {0}", returnTime);
                 SaveBooks();
+            }
+        }
+        public void ReturnBook()
+        {
+            Console.Clear();
+            Console.Write("Please enter your Borrow Code:");
+            string borrowCode = Console.ReadLine();
+
+            Book selected = null;
+            Borrowed borrow = null;
+
+            foreach (Borrowed b in borrowedList)
+            {
+                if (borrowCode == b.BorrowCode())
+                {
+                    borrow = b;
+                    foreach (Book book in books)
+                    {
+                        if (b.ISBN() == book.GetIsbn())
+                        {
+                            selected = book;
+                            break;
+                        }
+                    }
+                    if (b != null)
+                        break;
+                }
+            }
+            if (borrow == null)
+            {
+                Console.WriteLine("No Book found!\nPlease press any key to return...");
+                Console.ReadKey();
+                return;
+            }
+
+            char choose = ' ';
+            bool loop = false;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("You are returning this book:\n{0} by {1}", selected?.GetName(), selected?.GetAuthor());
+                Console.WriteLine("Are you sure to return this book?");
+                Console.WriteLine("1-)Yes.");
+                Console.WriteLine("2-)No.");
+
+                if (loop)
+                    Console.WriteLine("Please select a valid option!");
+                loop = true;
+
+                if (!libSystem.GetChoose('1', '2', ref choose, null))
+                    continue;
+            } while (choose == 'p');
+
+            if (choose == '1')
+            {
+                borrowedList.Remove(borrow);
+                selected?.SetInfo(increase: true);
+                SaveBooks();
+                SaveBorrows();
             }
         }
         List<Book> PageChange(ref int offSet, char choose, List<Book> found)
@@ -439,58 +554,78 @@ namespace KutuphaneYonetimSistemi
             if (offSet < 0 || offSet > found.Count)
                 offSet = tempOffSet;
 
-            int next = (int)MathF.Min(found.Count - offSet, 5);
+            int next = Math.Min(found.Count - offSet, 5);
 
             return found.GetRange(offSet, next);
         }
-        public void ReturnBook()
-        {
-            Console.WriteLine("ReturnBook");
-            //TODO: Return a book.
-        }
-
         public void UnreturnedBooks()
         {
-            Console.WriteLine("UnreturnedBooks");
-            //TODO: Display unreturned books.
-        }
-
-        public void WriteBook(Book book)
-        {
-            //This is normal method that took 1 book as parameter. I use this for adding new book.
-            //In my researches, I found out I don't need to use FileStream, but I use it just in case if anything happens.
-
-            FileStream file = new FileStream(path, FileMode.Append);
-            StreamWriter writer = new StreamWriter(file);
-            writer.WriteLine(book.GetName());
-            writer.WriteLine(book.GetAuthor());
-            writer.WriteLine(book.GetIsbn());
-            writer.WriteLine(book.GetCopy());
-            writer.WriteLine(book.GetBorrow());
-            writer.Close();
-            file.Close();
-        }
-        public void WriteBook(List<Book> book)
-        {
-            //This is overloaded writebook method. It takes list of Book and rewrite them to the existing file.
-
-            FileStream file = new FileStream(path, FileMode.Append);
-            StreamWriter writer = new StreamWriter(file);
-            for (int i = 0; i < book.Count; i++)
+            if (borrowedList.Count == 0)
             {
-                writer.WriteLine(book[i].GetName());
-                writer.WriteLine(book[i].GetAuthor());
-                writer.WriteLine(book[i].GetIsbn());
-                writer.WriteLine(book[i].GetCopy());
-                writer.WriteLine(book[i].GetBorrow());
+                Console.WriteLine("No Unreturned books found!\nPress any key to return to back...");
+                Console.ReadKey();
+                return;
             }
-            writer.Close();
-            file.Close();
+            int offSet = 0;
+
+            List<Book> page = new List<Book>();
+
+            foreach (Borrowed b in borrowedList)
+            {
+                foreach (Book book in books)
+                {
+                    if (b.ISBN() == book.GetIsbn())
+                    {
+                        page.Add(book);
+                    }
+                }
+            }
+
+            char choose = ' ';
+            do
+            {
+                Console.Write("\u001b[2J\u001b[3J");
+                Console.Clear();
+                int counter = 1;
+
+                for (int i = offSet; i < offSet + 5; i++)
+                {
+                    Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nBorrowed Date: {4}\nReturn Date: {5}\nBorrow Code: {6}\n-----------------------\n",
+                        offSet + counter++,
+                         page[i].GetName(),
+                          page[i].GetAuthor(),
+                           page[i].GetIsbn(),
+                            borrowedList[i].B_Date(),
+                             borrowedList[i].R_Date(),
+                             borrowedList[i].BorrowCode());
+                    Console.WriteLine("i+1: {0}   PageCount: {1}", i + 1,page.Count);
+                    if (i + 1 == page.Count)
+                        break;
+                }
+
+                if (offSet != 0)
+                    Console.WriteLine("8-) Previous Page");
+                if (offSet + 5 < page.Count)
+                    Console.WriteLine("9-) Next Page");
+
+                Console.WriteLine("x-) Return to main menu.");
+
+                if (!libSystem.GetChoose('8', '9', ref choose, "Display"))
+                    continue;
+
+
+
+                offSet += (choose == '8') ? -5 : (choose == '9') ? 5 : 0;
+
+                if (choose == 'x')
+                    return;
+
+            } while (choose == 'p' || choose == '8' || choose == '9');
         }
         public void GetBooks()
         {
             //Read books and store them in a list named books from a file (I store the file in documents)
-            FileStream file = new FileStream(path, FileMode.OpenOrCreate);
+            FileStream file = new FileStream(bookPath, FileMode.OpenOrCreate);
             StreamReader reader = new StreamReader(file);
 
             while (!reader.EndOfStream)
@@ -505,17 +640,102 @@ namespace KutuphaneYonetimSistemi
             }
             reader.Close();
             file.Close();
+
+            file = new FileStream(borrowPath, FileMode.OpenOrCreate);
+            reader = new StreamReader(file);
+
+            while (!reader.EndOfStream)
+            {
+                string isbn = reader.ReadLine();
+                string borrowCode = reader.ReadLine();
+                DateTime b_date = Convert.ToDateTime(reader.ReadLine());
+                DateTime r_date = Convert.ToDateTime(reader.ReadLine());
+                Borrowed borrowed = new Borrowed(isbn, borrowCode, b_date, r_date);
+                borrowedList.Add(borrowed);
+            }
+            reader.Close();
+            file.Close();
         }
 
         public void SaveBooks()
         {
             //Clear the file "path)
-            StreamWriter writer = new StreamWriter(path, false);
+            StreamWriter writer = new StreamWriter(bookPath, false);
             writer.Write("");
             writer.Close();
             //Overloaded method "Writebook" takes list of books, not one book.
-            WriteBook(books);
+            WriteBook();
         }
 
+        public void WriteBook()
+        {
+            //This is overloaded writebook method. It takes list of Book and rewrite them to the existing file.
+
+            FileStream file = new FileStream(bookPath, FileMode.Append);
+            StreamWriter writer = new StreamWriter(file);
+
+            for (int i = 0; i < books.Count; i++)
+            {
+                writer.WriteLine(books[i].GetName());
+                writer.WriteLine(books[i].GetAuthor());
+                writer.WriteLine(books[i].GetIsbn());
+                writer.WriteLine(books[i].GetCopy());
+                writer.WriteLine(books[i].GetBorrow());
+            }
+            writer.Close();
+            file.Close();
+        }
+        public void WriteBook(Book book)
+        {
+            //This is normal method that took 1 book as parameter. I use this for adding new book.
+            //In my researches, I found out I don't need to use FileStream, but I use it just in case if anything happens.
+
+            FileStream file = new FileStream(bookPath, FileMode.Append);
+            StreamWriter writer = new StreamWriter(file);
+            writer.WriteLine(book.GetName());
+            writer.WriteLine(book.GetAuthor());
+            writer.WriteLine(book.GetIsbn());
+            writer.WriteLine(book.GetCopy());
+            writer.WriteLine(book.GetBorrow());
+            writer.Close();
+            file.Close();
+        }
+
+        public void SaveBorrows()
+        {
+            StreamWriter writer = new StreamWriter(borrowPath, false);
+            writer.Write("");
+            writer.Close();
+            WriteBorrow();
+        }
+
+        public void WriteBorrow()
+        {
+            //This is overloaded writebook method. It takes list of Book and rewrite them to the existing file.
+
+            FileStream file = new FileStream(borrowPath, FileMode.Append);
+            StreamWriter writer = new StreamWriter(file);
+
+            for (int i = 0; i < borrowedList.Count; i++)
+            {
+                writer.WriteLine(borrowedList[i].ISBN());
+                writer.WriteLine(borrowedList[i].BorrowCode());
+                writer.WriteLine(borrowedList[i].B_Date());
+                writer.WriteLine(borrowedList[i].R_Date());
+            }
+            writer.Close();
+            file.Close();
+        }
+        public void WriteBorrow(Borrowed borrow)
+        {
+            FileStream file = new FileStream(borrowPath, FileMode.Append);
+            StreamWriter writer = new StreamWriter(file);
+            writer.WriteLine(borrow.ISBN());
+            writer.WriteLine(borrow.BorrowCode());
+            writer.WriteLine(borrow.B_Date());
+            writer.WriteLine(borrow.R_Date());
+            writer.Close();
+            file.Close();
+        }
     }
 }
