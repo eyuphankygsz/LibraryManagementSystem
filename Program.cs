@@ -305,7 +305,7 @@
                 Console.WriteLine("x-) Return to main menu.");
                 if (!unselectable)
                 {
-                    Console.Write("Select the one you want to borrow or return: ");
+                    Console.Write("Select a book: ");
                     if (!LibrarySystem.GetChoose('1', Convert.ToChar((char)MathF.Min(page.Count + '0', '5')), ref choose, "Display"))
                         continue;
 
