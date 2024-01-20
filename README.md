@@ -43,26 +43,31 @@ You can use this Borrow Code to return the book.
 
 ## Adding a new book
 1. Select the Add a new book by pressing 1 in the main menu.
-2. Enter the Name of the book,
-3. Enter the Author of the book,
-4. Enter the ISBN of the book
+2. Enter the Name of the book.
+3. Enter the Author of the book.
+4. Enter the ISBN of the book.
 5. And enter the copiy count this library have.
 
 ## Borrow a book
 1. Select Borrow a book by pressing 6 in the main menu.
-2. Search the book you want,
+2. Search the book you want.
 3. **Don't forget that you can change pages by pressing 8 and 9.**
-4. Select the right book,
-5. Check the selected book and confirm the selection,
+4. Select the right book.
+5. Check the selected book and confirm the selection.
 6. Check the latest return date and **COPY YOUR BORROW CODE** to return the book later!
+
+## Return a book
+1. Select Return a book by pressing 7 in the main menu.
+2. Enter your Borrow Code.
+3. Check the selected book and confirm the selection!
 
 ## Edit an existing book
 
 You can either set copy count, set borrow count or delete the book entirely!
 1. Select Edit a book by pressing 8 in the main menu.
-2. Search the book you want,
-3. Select the right book to edit,
-4. Select one of the 4 options,
+2. Search the book you want.
+3. Select the right book to edit.
+4. Select one of the 4 options.
 
 ### How I create the Borrow Code?
 

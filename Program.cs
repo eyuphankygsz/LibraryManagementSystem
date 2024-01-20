@@ -185,19 +185,21 @@
             do
             {
                 Console.Clear();
-                string bName = SetStrings("Please enter the book's name (Ex. Red Dead): ", " ");
-                if (bName.Length == 0) break;
+                string bName = SetStrings("Please enter the book's name (Ex. Red Dead): ", from: " ", 0);
+                if (bName == null) return;
 
-                string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", " ");
-                if (author.Length == 0) break;
+                string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", from: " ", 0);
+                if (author == null) return;
 
-                string isbn = SetStrings("Please enter the book's ISBN (Ex. 9876543210987): ", "isbn");
-                if (isbn.Length == 0) break;
+                string isbn = SetStrings("Please enter the book's ISBN (Ex. 9876543210987): ", from: "isbn", 0);
+                if (isbn == null) return;
 
-                byte copy = SetBytes("Please enter how many copies of this book this library have: ", 1);
+                string copy = SetStrings("Please enter how many copies of this book this library have: ", from: "copy", 1);
+                if (copy == null) return;
+
                 Console.WriteLine("Adding new book to the list...");
 
-                Book newBook = new Book(bName, author, isbn, copy, 0);
+                Book newBook = new Book(bName, author, isbn, Convert.ToByte(copy), 0);
                 books.Add(newBook);
                 WriteBook(newBook);
                 Console.Clear();
@@ -208,62 +210,52 @@
             } while (choose == '1');
 
         }
-        byte SetBytes(string message, byte min)
+        string SetStrings(string message, string from, byte min)
         {
-            Console.Clear();
-            bool error = false;
+            bool loop = false;
+            string errorMessage = null;
+
             while (true)
             {
-                if (error)
-                    Console.WriteLine("Please enter numeric value. ({0} to 255)", min);
-                error = true;
-
-                Console.WriteLine(message);
-                string input = Console.ReadLine();
-
-                if (byte.TryParse(input, out byte selected))
-                    if (selected < min)
-                        continue;
-                    else
-                        return Convert.ToByte(input);
-            }
-        }
-        string SetStrings(string message, string from)
-        {
-            Console.Clear();
-            bool error = false;
-            string errorMessage = "";
-            while (true)
-            {
-
+                Console.Clear();
                 Console.WriteLine("(To cancel adding a new book, press ENTER without write anything.)");
-                if (error)
-                    Console.WriteLine(errorMessage);
-                errorMessage = "Please enter at least 3 characters.";
-                error = true;
+                Console.WriteLine(errorMessage);
                 Console.Write(message);
+
                 string str = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(str))
+                    return null;
+
                 if (from.Equals("isbn"))
                 {
                     errorMessage = "The ISBN code must consist of numbers only, be at least 3 digits and unique.";
                     if (!ISBNCheck(str))
                         continue;
+                    else
+                        return str;
                 }
-                if (str.Length == 0)
+                else if (from.Equals("copy"))
                 {
-                    return str;
+                    errorMessage = string.Format("Please enter numeric value. ({0} to 255)", min);
+                    if (byte.TryParse(str, out byte selected) && selected >= min)
+                        return str;
                 }
-                if (str.Length >= 3)
+                else if (str.Length >= 3)
                     return str;
+                else
+                    errorMessage = "Please enter more than 3 characters.";
             }
         }
         bool ISBNCheck(string str)
         {
+            if (str.Length < 3)
+                return false;
+
             for (int i = 0; i < str.Length; i++)
-            {
                 if (!char.IsDigit(str[i]))
                     return false;
-            }
+
             bool match = false;
             books.ForEach(delegate (Book b)
             {
@@ -642,8 +634,8 @@
                 Console.Clear();
                 Console.WriteLine("You've selected this book:\n{0} by {1}", selected.GetName(), selected.GetAuthor());
                 Console.WriteLine("Select an option:");
-                Console.WriteLine("1-)Set Copy (Current Copy: {0}).",selected.GetCopy());
-                Console.WriteLine("2-)Set Borrow (Currect Borrow: {0}).",selected.GetBorrow());
+                Console.WriteLine("1-)Set Copy (Current Copy: {0}).", selected.GetCopy());
+                Console.WriteLine("2-)Set Borrow (Currect Borrow: {0}).", selected.GetBorrow());
                 Console.WriteLine("3-)Delete book.");
                 Console.WriteLine("4-)Return to main menu.");
 
@@ -658,23 +650,47 @@
                     return;
                 }
             } while (choose == 'p');
-
-           switch(choose)
-           {
+            Console.Clear();
+            switch (choose)
+            {
                 case '1':
-                    byte copy = SetBytes("Please enter new copy count of this book: ", 0);
-                    selected.SetCopy(copy);
+                    string copy = SetStrings("Please enter new copy count of this book: ", from: "copy", 0);
+                    if (copy == null)
+                    {
+                        Console.WriteLine("Successfully canceled!\nPress any key to return...");
+                        return;
+                    }
+                    Console.WriteLine("Book succesfully updated!");
+                    selected.SetCopy(Convert.ToByte(copy));
                     break;
                 case '2':
-                    byte borrow = SetBytes("Please enter new borrow count of this book: ", 0);
-                    selected.SetBorrow(borrow);
+                    string borrow = SetStrings("Please enter new borrow count of this book: ", from: "copy", 0);
+                    if (borrow == null)
+                    {
+                        Console.WriteLine("Successfully canceled!\nPress any key to return...");
+                        return;
+                    }
+                    Console.WriteLine("Book succesfully updated!");
+                    selected.SetBorrow(Convert.ToByte(borrow));
                     break;
                 case '3':
-                    books.Remove(selected);
+                    do
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Are you sure about removing this book from library?\n1-)Yes.\n2-)No.");
+                        if (!LibrarySystem.GetChoose('1', '2', ref choose, "edit"))
+                            continue;
+                    } while (choose == 'p');
+                    if (choose == '1')
+                    {
+                        books.Remove(selected);
+                        Console.WriteLine("Book successfully removed.\nPress any key to continue...");
+                    }
                     break;
-           }
+            }
 
             SaveBooks();
+            Console.ReadKey();
         }
         Book GetBook()
         {
