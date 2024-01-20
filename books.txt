@@ -1,0 +1,105 @@
+A Prisoner’s Scrapbook
+L.K. Advani
+4187391
+8
+2
+A Strange and Sublime Address
+Amit Chaudhuri
+87193719
+6
+0
+Don Quixote
+Miguel de Cervantes
+12123671
+8
+1
+Alice's Adventures in Wonderland
+Lewis Carroll
+9581419138
+19
+1
+The Adventures of Tom Sawyer
+Mark Twain
+983131123
+11
+0
+Moby Dick
+Herman Melville
+1673218372
+19
+1
+A Christmas Carol
+Charles Dickens
+2384190
+5
+0
+Little Women
+Louisa May Alcott
+0001232131
+6
+0
+Frankenstein, or, the Modern Prometheus
+Mary Shelley
+58923101
+34
+0
+Oliver Twist
+Charles Dickens
+654894123
+20
+0
+Harry Potter: Philosopher Stone
+J.K. Rowling
+9875218465
+27
+0
+Harry Potter: Chamber of Secrets
+J.K. Rowling
+7896456132
+19
+0
+Harry Potter: Prisoner of Azkaban
+J.K. Rowling
+987654321
+6
+1
+Harry Potter: Goblet of Fire
+J.K. Rowling
+456185796
+6
+0
+Harry Potter: Order of Phoenix
+J.K. Rowling
+22255546548
+10
+0
+Harry Potter: Half-Blood Prince
+J.K. Rowling
+1233322211
+10
+0
+Harry Potter: Deathly Hallows
+J.K. Rowling
+987414797779
+8
+0
+Metro 2033
+Dmitri Gluhovski
+32154847239
+12
+0
+Metro 2034
+Dmitri Gluhovski
+555477548
+2
+0
+Metro 2036
+Dmitri Gluhovski
+5325645564
+1
+0
+Metro 2077
+Dmitri Gluhovski
+58888731315
+21
+0
