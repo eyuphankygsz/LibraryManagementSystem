@@ -1,22 +1,12 @@
-﻿using System;
-using System.Diagnostics.Metrics;
-using System.Numerics;
-using System.Text;
-using System.Xml.Linq;
-using static System.Reflection.Metadata.BlobBuilder;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace KutuphaneYonetimSistemi
+﻿namespace KutuphaneYonetimSistemi
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            LibrarySystem sys = new LibrarySystem();
+            LibrarySystem sys = new();
             sys.Initialize();
         }
-
-
     }
 
     class LibrarySystem
@@ -24,8 +14,8 @@ namespace KutuphaneYonetimSistemi
         Library? library;
         public void Initialize()
         {
-            library = new Library(this);
-            library.GetBooks();
+            library = new Library();
+            library.GetLists();
             MainMenu();
         }
 
@@ -38,13 +28,14 @@ namespace KutuphaneYonetimSistemi
                 if (choose == 'p')
                     Console.WriteLine("You selected an option that does not exist! Please enter new input...");
 
-                if (!GetChoose('1', '6', ref choose, "Menu"))
+                if (!GetChoose('1', '7', ref choose, "Menu"))
                     continue;
 
                 MainMenuRouter(choose);
             }
         }
-        void DisplayMainMenu()
+
+        static void DisplayMainMenu()
         {
             Console.Clear();
             Console.WriteLine("*************************************");
@@ -53,13 +44,14 @@ namespace KutuphaneYonetimSistemi
 
             Console.WriteLine("1-) Add a new book.");
             Console.WriteLine("2-) Display all books.");
-            Console.WriteLine("3-) Search a book.");
-            Console.WriteLine("4-) Borrow a book.");
-            Console.WriteLine("5-) Return a book.");
-            Console.WriteLine("6-) Display expired books.");
+            Console.WriteLine("3-) Display all borrowed books.");
+            Console.WriteLine("4-) Display expired books.");
+            Console.WriteLine("5-) Search a book.");
+            Console.WriteLine("6-) Borrow a book.");
+            Console.WriteLine("7-) Return a book.");
             Console.WriteLine("X-) Exit the program.");
         }
-        public bool GetChoose(char min, char max, ref char choose, string from)
+        public static bool GetChoose(char min, char max, ref char choose, string from)
         {
             choose = Console.ReadKey().KeyChar;
             if (choose >= min && choose <= max)
@@ -98,17 +90,21 @@ namespace KutuphaneYonetimSistemi
                     library?.DisplayBooks(unselectable: true, 0, '0', library.ListOfBooks());
                     break;
                 case '3':
-                    library?.SearchBook(display: true);
+                    library?.UnreturnedBooks(library.ListOfBorrowed());
                     break;
                 case '4':
-                    library?.BorrowBook();
+                    library?.UnreturnedBooks(library.Expired());
                     break;
                 case '5':
-                    library?.ReturnBook();
+                    library?.SearchBook(display: true);
                     break;
                 case '6':
-                    library?.UnreturnedBooks();
+                    library?.BorrowBook();
                     break;
+                case '7':
+                    library?.ReturnBook();
+                    break;
+
             }
         }
 
@@ -116,8 +112,8 @@ namespace KutuphaneYonetimSistemi
 
     class Book
     {
-        string bName, author, isbn;
-        byte copy, borrow;
+        private readonly string bName, author, isbn;
+        private byte copy, borrow;
 
         public string GetName() => bName;
         public string GetAuthor() => author;
@@ -138,8 +134,6 @@ namespace KutuphaneYonetimSistemi
                 borrow++;
             }
         }
-        public void SetCopy(byte copy) => this.copy = copy;
-        public void SetBorrow(byte borrow) => this.borrow = borrow;
 
         public Book(string bName, string author, string isbn, byte copy, byte borrow)
         {
@@ -153,10 +147,8 @@ namespace KutuphaneYonetimSistemi
 
     class Borrowed
     {
-        string isbn;
-        string borrowCode;
-        DateTime borrowedDate;
-        DateTime returnDate;
+        private readonly string isbn, borrowCode;
+        private readonly DateTime borrowedDate, returnDate;
 
         public string ISBN() => isbn;
         public string BorrowCode() => borrowCode;
@@ -174,37 +166,32 @@ namespace KutuphaneYonetimSistemi
 
     class Library
     {
-        List<Book> books = new List<Book>();
+        readonly List<Book> books = new List<Book>();
         List<Borrowed> borrowedList = new List<Borrowed>();
         string bookPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "books.txt");
         string borrowPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "borrowed.txt");
-        public List<Book> ListOfBooks()
-        {
-            return books;
-        }
-        LibrarySystem libSystem;
-        public Library(LibrarySystem libSystem)
-        {
-            this.libSystem = libSystem;
-        }
+
+        public List<Book> ListOfBooks() => books;
+        public List<Borrowed> ListOfBorrowed() => borrowedList;
         public void AddBook()
         {
-            char choose = ' ';
-
+            char choose;
             do
             {
                 Console.Clear();
                 string bName = SetStrings("Please enter the book's name (Ex. Red Dead): ", " ");
                 if (bName.Length == 0) break;
+
                 string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", " ");
                 if (author.Length == 0) break;
+                
                 string isbn = SetStrings("Please enter the book's ISBN (Ex. 9876543210987): ", "isbn");
                 if (isbn.Length == 0) break;
+                
                 byte copy = SetBytes("Please enter how many copies of this book this library have: ", 1);
-                byte borrow = SetBytes("Please enter how many copies of this book has been borrowed: ", 0);
                 Console.WriteLine("Adding new book to the list...");
 
-                Book newBook = new Book(bName, author, isbn, copy, borrow);
+                Book newBook = new Book(bName, author, isbn, copy, 0);
                 books.Add(newBook);
                 WriteBook(newBook);
                 Console.Clear();
@@ -229,13 +216,10 @@ namespace KutuphaneYonetimSistemi
                 string input = Console.ReadLine();
 
                 if (byte.TryParse(input, out byte selected))
-                {
                     if (selected < min)
                         continue;
                     else
                         return Convert.ToByte(input);
-                }
-
             }
         }
         string SetStrings(string message, string from)
@@ -324,13 +308,13 @@ namespace KutuphaneYonetimSistemi
                 if (!unselectable)
                 {
                     Console.Write("Select the one you want to borrow or return: ");
-                    if (!libSystem.GetChoose('1', Convert.ToChar((char)MathF.Min(page.Count + '0', '5')), ref choose, "Display"))
+                    if (!LibrarySystem.GetChoose('1', Convert.ToChar((char)MathF.Min(page.Count + '0', '5')), ref choose, "Display"))
                         continue;
 
                 }
                 else
                 {
-                    if (!libSystem.GetChoose('8', '9', ref choose, "Display"))
+                    if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
                         continue;
                 }
 
@@ -366,7 +350,7 @@ namespace KutuphaneYonetimSistemi
                 if (choose == 'p')
                     Console.WriteLine("You selected an option that does not exist! Please enter new input...");
 
-                if (!libSystem.GetChoose('1', '2', ref choose, "Search"))
+                if (!LibrarySystem.GetChoose('1', '2', ref choose, "Search"))
                     continue;
 
                 Console.Clear();
@@ -440,6 +424,10 @@ namespace KutuphaneYonetimSistemi
             while (true)
             {
                 selected = DisplayBooks(unselectable: false, 0, choose, found);
+                if (choose == 'x')
+                {
+                    return;
+                }
                 if (selected.GetCopy() == 0)
                 {
                     Console.Clear();
@@ -467,14 +455,14 @@ namespace KutuphaneYonetimSistemi
                     Console.WriteLine("Please select a valid option!");
                 loop = true;
 
-                if (!libSystem.GetChoose('1', '2', ref choose, null))
+                if (!LibrarySystem.GetChoose('1', '2', ref choose, null))
                     continue;
             } while (choose == 'p');
 
             if (choose == '1')
             {
                 Random rand = new Random();
-                string borrowCode = books.IndexOf(selected).ToString() + selected.GetCopy().ToString() + rand.Next(100, 1000).ToString();
+                string borrowCode = books.IndexOf(selected).ToString() + selected.GetCopy() + rand.Next(100,1000) + borrowedList.Count;
                 DateTime now = DateTime.Now;
                 DateTime returnTime = now.AddDays(30);
                 Borrowed newBorrowed = new Borrowed(selected.GetIsbn(), borrowCode, now, returnTime);
@@ -484,7 +472,8 @@ namespace KutuphaneYonetimSistemi
                 Console.Clear();
                 Console.WriteLine("You've borrowed the book!");
                 Console.WriteLine("DON'T FORGET YOUR BORROW CODE: {0}", borrowCode);
-                Console.WriteLine("You have to return this book until: {0}", returnTime);
+                Console.WriteLine("You have to return this book until: {0}\nPress any key to continue...", returnTime);
+                Console.ReadKey();
                 SaveBooks();
             }
         }
@@ -535,7 +524,7 @@ namespace KutuphaneYonetimSistemi
                     Console.WriteLine("Please select a valid option!");
                 loop = true;
 
-                if (!libSystem.GetChoose('1', '2', ref choose, null))
+                if (!LibrarySystem.GetChoose('1', '2', ref choose, null))
                     continue;
             } while (choose == 'p');
 
@@ -551,16 +540,17 @@ namespace KutuphaneYonetimSistemi
         {
             int tempOffSet = offSet;
             offSet += (choose == '8') ? -5 : (choose == '9') ? 5 : 0;
-            if (offSet < 0 || offSet > found.Count)
+            if (offSet < 0 || offSet >= found.Count)
                 offSet = tempOffSet;
 
             int next = Math.Min(found.Count - offSet, 5);
 
             return found.GetRange(offSet, next);
         }
-        public void UnreturnedBooks()
+        public void UnreturnedBooks(List<Borrowed> newBorrowedList)
         {
-            if (borrowedList.Count == 0)
+
+            if (newBorrowedList.Count == 0)
             {
                 Console.WriteLine("No Unreturned books found!\nPress any key to return to back...");
                 Console.ReadKey();
@@ -570,7 +560,7 @@ namespace KutuphaneYonetimSistemi
 
             List<Book> page = new List<Book>();
 
-            foreach (Borrowed b in borrowedList)
+            foreach (Borrowed b in newBorrowedList)
             {
                 foreach (Book book in books)
                 {
@@ -582,12 +572,13 @@ namespace KutuphaneYonetimSistemi
             }
 
             char choose = ' ';
+            Console.WriteLine(page.Count);
             do
             {
                 Console.Write("\u001b[2J\u001b[3J");
                 Console.Clear();
                 int counter = 1;
-
+                bool pagechange = false;
                 for (int i = offSet; i < offSet + 5; i++)
                 {
                     Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nBorrowed Date: {4}\nReturn Date: {5}\nBorrow Code: {6}\n-----------------------\n",
@@ -595,12 +586,14 @@ namespace KutuphaneYonetimSistemi
                          page[i].GetName(),
                           page[i].GetAuthor(),
                            page[i].GetIsbn(),
-                            borrowedList[i].B_Date(),
-                             borrowedList[i].R_Date(),
-                             borrowedList[i].BorrowCode());
-                    Console.WriteLine("i+1: {0}   PageCount: {1}", i + 1,page.Count);
+                            newBorrowedList[i].B_Date(),
+                             newBorrowedList[i].R_Date(),
+                             newBorrowedList[i].BorrowCode());
                     if (i + 1 == page.Count)
+                    {
+                        pagechange = true;
                         break;
+                    }
                 }
 
                 if (offSet != 0)
@@ -610,19 +603,18 @@ namespace KutuphaneYonetimSistemi
 
                 Console.WriteLine("x-) Return to main menu.");
 
-                if (!libSystem.GetChoose('8', '9', ref choose, "Display"))
+                if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
                     continue;
 
-
-
-                offSet += (choose == '8') ? -5 : (choose == '9') ? 5 : 0;
+                    offSet += (choose == '8') ? 
+                    ((offSet - 5 < 0) ? 0 : -5) : (choose == '9' && !pagechange) ? 5 : 0;
 
                 if (choose == 'x')
                     return;
 
             } while (choose == 'p' || choose == '8' || choose == '9');
         }
-        public void GetBooks()
+        public void GetLists()
         {
             //Read books and store them in a list named books from a file (I store the file in documents)
             FileStream file = new FileStream(bookPath, FileMode.OpenOrCreate);
@@ -656,7 +648,12 @@ namespace KutuphaneYonetimSistemi
             reader.Close();
             file.Close();
         }
-
+        public List<Borrowed> Expired()
+        {
+            DateTime now = DateTime.Now;
+            List<Borrowed> newBorrowed = borrowedList.FindAll(x => now >= x.R_Date());
+            return newBorrowed;
+        }
         public void SaveBooks()
         {
             //Clear the file "path)
