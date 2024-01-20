@@ -28,7 +28,7 @@
                 if (choose == 'p')
                     Console.WriteLine("You selected an option that does not exist! Please enter new input...");
 
-                if (!GetChoose('1', '7', ref choose, "Menu"))
+                if (!GetChoose('1', '8', ref choose, "Menu"))
                     continue;
 
                 MainMenuRouter(choose);
@@ -49,6 +49,7 @@
             Console.WriteLine("5-) Search a book.");
             Console.WriteLine("6-) Borrow a book.");
             Console.WriteLine("7-) Return a book.");
+            Console.WriteLine("8-) Edit a book");
             Console.WriteLine("X-) Exit the program.");
         }
         public static bool GetChoose(char min, char max, ref char choose, string from)
@@ -104,6 +105,9 @@
                 case '7':
                     library?.ReturnBook();
                     break;
+                case '8':
+                    library?.EditBook();
+                    break;
 
             }
         }
@@ -134,6 +138,8 @@
                 borrow++;
             }
         }
+        public void SetCopy(byte copy) => this.copy = copy;
+        public void SetBorrow(byte borrow) => this.borrow = borrow;
 
         public Book(string bName, string author, string isbn, byte copy, byte borrow)
         {
@@ -184,10 +190,10 @@
 
                 string author = SetStrings("Please enter the book's author (Ex. Arthur Morgan): ", " ");
                 if (author.Length == 0) break;
-                
+
                 string isbn = SetStrings("Please enter the book's ISBN (Ex. 9876543210987): ", "isbn");
                 if (isbn.Length == 0) break;
-                
+
                 byte copy = SetBytes("Please enter how many copies of this book this library have: ", 1);
                 Console.WriteLine("Adding new book to the list...");
 
@@ -411,38 +417,12 @@
 
         public void BorrowBook()
         {
-            Console.Clear();
-            List<Book> found = SearchBook(display: false);
-            if (found == null || found.Count == 0)
-            {
-                Console.WriteLine("Press any key to return to main menu...");
-                Console.ReadKey();
-                return;
-            }
-            Book selected = null;
-            char choose = ' ';
-            while (true)
-            {
-                selected = DisplayBooks(unselectable: false, 0, choose, found);
-                if (choose == 'x')
-                {
-                    return;
-                }
-                if (selected.GetCopy() == 0)
-                {
-                    Console.Clear();
-                    Console.WriteLine("\nThis book has 0 copies in the library right now!\nPlease press any key to return...");
-                    Console.ReadKey();
-                    return;
-                }
-                else break;
-
-            }
+            Book selected = GetBook();
             bool loop = false;
             if (selected == null)
-            {
                 return;
-            }
+
+            char choose = ' ';
             do
             {
                 Console.Clear();
@@ -462,7 +442,7 @@
             if (choose == '1')
             {
                 Random rand = new Random();
-                string borrowCode = books.IndexOf(selected).ToString() + selected.GetCopy() + rand.Next(100,1000) + borrowedList.Count;
+                string borrowCode = books.IndexOf(selected).ToString() + selected.GetCopy() + rand.Next(100, 1000) + borrowedList.Count;
                 DateTime now = DateTime.Now;
                 DateTime returnTime = now.AddDays(30);
                 Borrowed newBorrowed = new Borrowed(selected.GetIsbn(), borrowCode, now, returnTime);
@@ -606,8 +586,8 @@
                 if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
                     continue;
 
-                    offSet += (choose == '8') ? 
-                    ((offSet - 5 < 0) ? 0 : -5) : (choose == '9' && !pagechange) ? 5 : 0;
+                offSet += (choose == '8') ?
+                ((offSet - 5 < 0) ? 0 : -5) : (choose == '9' && !pagechange) ? 5 : 0;
 
                 if (choose == 'x')
                     return;
@@ -648,6 +628,88 @@
             reader.Close();
             file.Close();
         }
+
+        public void EditBook()
+        {
+            Book selected = GetBook();
+            char choose = ' ';
+            bool loop = false;
+            if (selected == null)
+                return;
+
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("You've selected this book:\n{0} by {1}", selected.GetName(), selected.GetAuthor());
+                Console.WriteLine("Select an option:");
+                Console.WriteLine("1-)Set Copy (Current Copy: {0}).",selected.GetCopy());
+                Console.WriteLine("2-)Set Borrow (Currect Borrow: {0}).",selected.GetBorrow());
+                Console.WriteLine("3-)Delete book.");
+                Console.WriteLine("4-)Return to main menu.");
+
+                if (loop)
+                    Console.WriteLine("Please select a valid option!");
+                loop = true;
+
+                if (!LibrarySystem.GetChoose('1', '4', ref choose, null))
+                    continue;
+                if (choose == '4')
+                {
+                    return;
+                }
+            } while (choose == 'p');
+
+           switch(choose)
+           {
+                case '1':
+                    byte copy = SetBytes("Please enter new copy count of this book: ", 0);
+                    selected.SetCopy(copy);
+                    break;
+                case '2':
+                    byte borrow = SetBytes("Please enter new borrow count of this book: ", 0);
+                    selected.SetBorrow(borrow);
+                    break;
+                case '3':
+                    books.Remove(selected);
+                    break;
+           }
+
+            SaveBooks();
+        }
+        Book GetBook()
+        {
+            Console.Clear();
+            List<Book> found = SearchBook(display: false);
+            if (found == null || found.Count == 0)
+            {
+                Console.WriteLine("Press any key to return to main menu...");
+                Console.ReadKey();
+                return null;
+            }
+            Book selected = null;
+            char choose = ' ';
+            while (true)
+            {
+                selected = DisplayBooks(unselectable: false, 0, choose, found);
+                if (selected == null)
+                {
+                    return null;
+                }
+                if (selected.GetCopy() == 0)
+                {
+                    Console.Clear();
+                    Console.WriteLine("\nThis book has 0 copies in the library right now!\nPlease press any key to return...");
+                    Console.ReadKey();
+                    return null;
+                }
+                else break;
+
+            }
+            return selected;
+        }
+
+
+
         public List<Borrowed> Expired()
         {
             DateTime now = DateTime.Now;

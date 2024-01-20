@@ -18,9 +18,10 @@ I created Book class to store the books into objects. Each Book object has diffe
    -borrow (Current borrowed count of the book)\
 except "copy" and "borrow", everything is readonly because they will never change.
 
-**6 Methods:**\
+**8 Methods:**\
    -5 of them is for get variables,\
    -SetInfo(bool increase) used for increasing and decreasing copy and borrow.
+   -1 Set Copy and 1 Set Borrow
 
 **1 Custom Constructor**
 
@@ -54,6 +55,14 @@ You can use this Borrow Code to return the book.
 4. Select the right book,
 5. Check the selected book and confirm the selection,
 6. Check the latest return date and **COPY YOUR BORROW CODE** to return the book later!
+
+## Edit an existing book
+
+You can either set copy count, set borrow count or delete the book entirely!
+1. Select Edit a book by pressing 8 in the main menu.
+2. Search the book you want,
+3. Select the right book to edit,
+4. Select one of the 4 options,
 
 ### How I create the Borrow Code?
 
