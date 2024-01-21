@@ -73,7 +73,7 @@
             }
             if (from == "Display")
             {
-                if (choose == '8' || choose == '9' || choose == 'x')
+                if (choose == '6' || choose == '7' || choose == '8' || choose == '9' || choose == 'x')
                 {
                     return true;
                 }
@@ -269,11 +269,8 @@
             books.ForEach(delegate (Book b)
             {
                 if (b.GetIsbn().Equals(str))
-                {
                     match = true;
-                }
-            }
-            );
+            });
             if (match)
                 return false;
 
@@ -289,7 +286,8 @@
                 Console.ReadKey();
                 return null;
             }
-
+            bool ascend = false;
+            char lastChoose = ' ';
             Book book;
             List<Book> page = found.GetRange(offSet, (int)MathF.Min(found.Count, offSet + 5));
             do
@@ -307,6 +305,8 @@
                              x.GetBorrow()));
 
                 Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.WriteLine("6-) Order by Name (Ascend or descend)");
+                Console.WriteLine("7-) Order by Author (Ascend or descend)");
                 if (offSet != 0)
                     Console.WriteLine("8-) Previous Page");
                 if (offSet + page.Count < found.Count)
@@ -324,19 +324,27 @@
                 }
                 else
                 {
-                    if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
+                    if (!LibrarySystem.GetChoose('6', '9', ref choose, "Display"))
                         continue;
                 }
 
-
-                page = PageChange(ref offSet, choose, found);
-
                 if (choose == 'x')
-                {
                     return null;
+
+                if (lastChoose != choose)
+                {
+                    ascend = false;
                 }
 
-            } while (choose == 'p' || choose == '8' || choose == '9');
+                if (choose == '6')
+                    found = !ascend ? found.OrderBy(x => x.GetName()).ToList() : found.OrderByDescending(x => x.GetName()).ToList();
+                if (choose == '7')
+                    found = !ascend ? found.OrderBy(x => x.GetAuthor()).ToList() : found.OrderByDescending(x => x.GetAuthor()).ToList();
+                ascend = !ascend;
+
+                page = PageChange(ref offSet, choose, found);
+                lastChoose = choose;
+            } while (choose == 'p' || choose == '6' || choose == '7' || choose == '8' || choose == '9');
 
             if (!unselectable)
             {
@@ -597,7 +605,7 @@
                 Console.Write("x-) Return to main menu.");
                 Console.BackgroundColor = ConsoleColor.Black;
 
-                if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
+                if (!LibrarySystem.GetChoose('6', '9', ref choose, "Display"))
                     continue;
 
                 offSet += (choose == '8') ?
