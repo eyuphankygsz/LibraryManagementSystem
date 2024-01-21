@@ -28,7 +28,7 @@
                 if (choose == 'p')
                     Console.WriteLine("You selected an option that does not exist! Please enter new input...");
 
-                if (!GetChoose('1', '8', ref choose, "Menu"))
+                if (!GetChoose('1', '9', ref choose, "Menu"))
                     continue;
 
                 MainMenuRouter(choose);
@@ -38,10 +38,11 @@
         static void DisplayMainMenu()
         {
             Console.Clear();
+            Console.BackgroundColor = ConsoleColor.Black;
             Console.WriteLine("*************************************");
             Console.WriteLine("| Welcome to the library system V0.1|");
             Console.WriteLine("*************************************");
-
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.WriteLine("1-) Add a new book.");
             Console.WriteLine("2-) Display all books.");
             Console.WriteLine("3-) Display all borrowed books.");
@@ -50,7 +51,10 @@
             Console.WriteLine("6-) Borrow a book.");
             Console.WriteLine("7-) Return a book.");
             Console.WriteLine("8-) Edit a book");
+            Console.WriteLine("9-) Report about library");
             Console.WriteLine("X-) Exit the program.");
+            Console.BackgroundColor = ConsoleColor.Black;
+
         }
         public static bool GetChoose(char min, char max, ref char choose, string from)
         {
@@ -107,6 +111,9 @@
                     break;
                 case '8':
                     library?.EditBook();
+                    break;
+                case '9':
+                    library?.Report();
                     break;
 
             }
@@ -204,8 +211,10 @@
                 WriteBook(newBook);
                 Console.Clear();
                 Console.WriteLine("All done!");
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("1-) Add new book");
                 Console.WriteLine("Or press any key to return to main menu...");
+                Console.BackgroundColor = ConsoleColor.Black;
                 choose = Console.ReadKey().KeyChar;
             } while (choose == '1');
 
@@ -297,15 +306,18 @@
                             x.GetCopy(),
                              x.GetBorrow()));
 
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 if (offSet != 0)
                     Console.WriteLine("8-) Previous Page");
                 if (offSet + page.Count < found.Count)
                     Console.WriteLine("9-) Next Page");
 
                 Console.WriteLine("x-) Return to main menu.");
+                Console.BackgroundColor = ConsoleColor.Black;
+
                 if (!unselectable)
                 {
-                    Console.Write("Select the one you want to borrow or return: ");
+                    Console.Write("Select a book: ");
                     if (!LibrarySystem.GetChoose('1', Convert.ToChar((char)MathF.Min(page.Count + '0', '5')), ref choose, "Display"))
                         continue;
 
@@ -342,8 +354,10 @@
             {
                 Console.Clear();
                 Console.WriteLine("Please choose which of the following you would like to search with");
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("1-)By book name.");
                 Console.WriteLine("2-)By author name.");
+                Console.BackgroundColor = ConsoleColor.Black;
 
                 if (choose == 'p')
                     Console.WriteLine("You selected an option that does not exist! Please enter new input...");
@@ -368,7 +382,9 @@
                 {
                     DisplayBooks(unselectable: true, 0, choose, found);
                     Console.Clear();
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
                     Console.WriteLine("1-)Search another book.");
+                    Console.BackgroundColor = ConsoleColor.Black;
                     Console.WriteLine("Or press any key to go back...");
                     choose = Console.ReadKey().KeyChar;
                 }
@@ -420,8 +436,10 @@
                 Console.Clear();
                 Console.WriteLine("You've selected this book:\n{0} by {1}", selected.GetName(), selected.GetAuthor());
                 Console.WriteLine("Are you sure to borrow this book?");
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("1-)Yes.");
                 Console.WriteLine("2-)No.");
+                Console.BackgroundColor = ConsoleColor.Black;
 
                 if (loop)
                     Console.WriteLine("Please select a valid option!");
@@ -489,8 +507,10 @@
                 Console.Clear();
                 Console.WriteLine("You are returning this book:\n{0} by {1}", selected?.GetName(), selected?.GetAuthor());
                 Console.WriteLine("Are you sure to return this book?");
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("1-)Yes.");
                 Console.WriteLine("2-)No.");
+                Console.BackgroundColor = ConsoleColor.Black;
 
                 if (loop)
                     Console.WriteLine("Please select a valid option!");
@@ -568,12 +588,14 @@
                     }
                 }
 
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 if (offSet != 0)
                     Console.WriteLine("8-) Previous Page");
                 if (offSet + 5 < page.Count)
                     Console.WriteLine("9-) Next Page");
 
-                Console.WriteLine("x-) Return to main menu.");
+                Console.Write("x-) Return to main menu.");
+                Console.BackgroundColor = ConsoleColor.Black;
 
                 if (!LibrarySystem.GetChoose('8', '9', ref choose, "Display"))
                     continue;
@@ -634,10 +656,12 @@
                 Console.Clear();
                 Console.WriteLine("You've selected this book:\n{0} by {1}", selected.GetName(), selected.GetAuthor());
                 Console.WriteLine("Select an option:");
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("1-)Set Copy (Current Copy: {0}).", selected.GetCopy());
                 Console.WriteLine("2-)Set Borrow (Currect Borrow: {0}).", selected.GetBorrow());
                 Console.WriteLine("3-)Delete book.");
                 Console.WriteLine("4-)Return to main menu.");
+                Console.BackgroundColor = ConsoleColor.Black;
 
                 if (loop)
                     Console.WriteLine("Please select a valid option!");
@@ -677,7 +701,10 @@
                     do
                     {
                         Console.Clear();
-                        Console.WriteLine("Are you sure about removing this book from library?\n1-)Yes.\n2-)No.");
+                        Console.WriteLine("Are you sure about removing this book from library?");
+                        Console.BackgroundColor = ConsoleColor.DarkBlue;
+                        Console.WriteLine("1-)Yes.\n2-)No.");
+                        Console.BackgroundColor = ConsoleColor.Black;
                         if (!LibrarySystem.GetChoose('1', '2', ref choose, "edit"))
                             continue;
                     } while (choose == 'p');
@@ -692,7 +719,7 @@
             SaveBooks();
             Console.ReadKey();
         }
-        Book GetBook()
+        private Book GetBook()
         {
             Console.Clear();
             List<Book> found = SearchBook(display: false);
@@ -732,7 +759,7 @@
             List<Borrowed> newBorrowed = borrowedList.FindAll(x => now >= x.R_Date());
             return newBorrowed;
         }
-        public void SaveBooks()
+        private void SaveBooks()
         {
             //Clear the file "path)
             StreamWriter writer = new StreamWriter(bookPath, false);
@@ -742,7 +769,7 @@
             WriteBook();
         }
 
-        public void WriteBook()
+        private void WriteBook()
         {
             //This is overloaded writebook method. It takes list of Book and rewrite them to the existing file.
 
@@ -760,7 +787,7 @@
             writer.Close();
             file.Close();
         }
-        public void WriteBook(Book book)
+        private void WriteBook(Book book)
         {
             //This is normal method that took 1 book as parameter. I use this for adding new book.
             //In my researches, I found out I don't need to use FileStream, but I use it just in case if anything happens.
@@ -776,7 +803,7 @@
             file.Close();
         }
 
-        public void SaveBorrows()
+        private void SaveBorrows()
         {
             StreamWriter writer = new StreamWriter(borrowPath, false);
             writer.Write("");
@@ -784,7 +811,7 @@
             WriteBorrow();
         }
 
-        public void WriteBorrow()
+        private void WriteBorrow()
         {
             //This is overloaded writebook method. It takes list of Book and rewrite them to the existing file.
 
@@ -801,7 +828,7 @@
             writer.Close();
             file.Close();
         }
-        public void WriteBorrow(Borrowed borrow)
+        private void WriteBorrow(Borrowed borrow)
         {
             FileStream file = new FileStream(borrowPath, FileMode.Append);
             StreamWriter writer = new StreamWriter(file);
@@ -811,6 +838,33 @@
             writer.WriteLine(borrow.R_Date());
             writer.Close();
             file.Close();
+        }
+
+        public void Report()
+        {
+            int differentBooks = books.Count;
+            int copies = 0;
+            int borrows = 0;
+            Book mostBorrowed = books[0];
+            books.ForEach(delegate (Book b)
+            {
+                copies += b.GetCopy();
+                borrows += b.GetBorrow();
+                if (b.GetBorrow() > mostBorrowed.GetBorrow())
+                {
+                    mostBorrowed = b;
+                }
+            });
+            int unreturned = Expired().Count;
+
+
+            Console.WriteLine("There are {0} different books in this library, {1} copies in total.", differentBooks, copies);
+            Console.WriteLine("{0} books were borrowed and {1} books were not returned even after deadline!", borrows, unreturned);
+            Console.WriteLine("Most borrowed book is {0} by {1}", mostBorrowed.GetName(), mostBorrowed.GetAuthor());
+            Console.WriteLine("Press any key to return...");
+            Console.ReadKey();
+
+
         }
     }
 }
