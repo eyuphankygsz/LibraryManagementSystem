@@ -269,11 +269,8 @@
             books.ForEach(delegate (Book b)
             {
                 if (b.GetIsbn().Equals(str))
-                {
                     match = true;
-                }
-            }
-            );
+            });
             if (match)
                 return false;
 
