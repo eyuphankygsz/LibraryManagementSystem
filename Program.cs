@@ -295,14 +295,20 @@
                 Console.Write("\u001b[2J\u001b[3J");
                 Console.Clear();
                 int counter = 1;
-                page.ForEach(x =>
-                Console.WriteLine("{0}-) Name: {1}\nAuthor: {2}\nISBN: {3}\nCopies: {4}\nBorrowed: {5}\n-----------------------\n",
-                        (unselectable) ? offSet + counter++ : counter++,
-                         x.GetName(),
-                          x.GetAuthor(),
-                           x.GetIsbn(),
-                            x.GetCopy(),
-                             x.GetBorrow()));
+
+                foreach (Book b in page)
+                {
+                    if (!unselectable)
+                        Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Console.Write("{0}-)", (unselectable) ? offSet + counter++ : counter++);
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.Write(" Name: {0}\nAuthor: {1}\nISBN: {2}\nCopies: {3}\nBorrowed: {4}\n-----------------------\n",
+                             b.GetName(),
+                              b.GetAuthor(),
+                               b.GetIsbn(),
+                                b.GetCopy(),
+                                 b.GetBorrow());
+                }
 
                 Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.WriteLine("6-) Order by Name (Ascend or descend)");
